@@ -1,0 +1,70 @@
+---
+- name: Create working directory
+  file:
+      path: "{{atos_client_working_dir}}"
+      state: directory
+      mode: 0755
+
+- name: Download ATOS client ISO
+  get_url:
+      url: "{{atos_client_iso_location}}"
+      dest: "{{atos_client_working_dir}}/{{atos_client_iso_name}}"
+      force: no
+
+- name: Mount the iso for ATOS
+  mount:
+      path: /mnt/atos_iso
+      src: "{{atos_client_working_dir}}/{{atos_client_iso_name}}"
+      fstype: iso9660
+      state: mounted
+
+- name: check for client software installation
+  stat: path=/etc/proteccio/proteccio.rc.example
+  register: atos_client
+
+- name: install client software
+  expect:
+    chdir: /mnt/atos_iso/Linux
+    command: ./install.sh
+    responses:
+      "Select Language: enter f \\(french\\) or e \\(english\\) \\[f\\]": "e"
+      "Do you want to install the TrustWay Proteccio Administration Application \\(y/n\\)\\? \\[n\\]": "n"
+      "Press the <Enter> key to exit the installation program": "\n"
+  when: not atos_client.stat.exists
+
+- name: create proteccio.rc
+  copy:
+      dest: /etc/proteccio/proteccio.rc
+      content: |
+          [PROTECCIO]
+          IPaddr={{atos_hsm_ip_address}}
+          SSL=1
+          SrvCert=server_cert.crt
+
+          [CLIENT]
+          Mode=0
+          LoggingLevel=7
+          LogFile=proteccio.log
+          ClntKey=proteccio_client.key
+          ClntCert=proteccio_client.crt
+
+- name: Get the client cert
+  get_url:
+      url: "{{atos_client_cert_location}}"
+      dest: /etc/proteccio/proteccio_client.crt
+      force: no
+
+- name: Get the client key
+  get_url:
+      url: "{{atos_client_key_location}}"
+      dest: /etc/proteccio/proteccio_client.key
+      force: no
+
+- name: Get the server cert
+  get_url:
+      url: "{{atos_server_cert_location}}"
+      dest: /etc/proteccio/server_cert.crt
+      force: no
+
+- name: run nethsmstatus to confirm connection
+  command: nethsmstatus
