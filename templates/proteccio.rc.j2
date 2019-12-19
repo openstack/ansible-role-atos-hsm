@@ -1,0 +1,17 @@
+{% for item in atos_hsms %}
+[PROTECCIO]
+IPaddr={{ item.ip }}
+SSL=1
+SrvCert={{ item.ip | replace('.', '_') }}.CRT
+
+{% endfor %}
+[CLIENT]
+{% if atos_hsms|length > 1 %}
+Mode=2
+{% else %}
+Mode=0
+{% endif %}
+LoggingLevel=7
+LogFile=/var/log/barbican/atos.log
+ClntKey=proteccio_client.key
+ClntCert=proteccio_client.crt

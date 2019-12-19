@@ -32,21 +32,20 @@
       "Press the <Enter> key to exit the installation program": "\n"
   when: not atos_client.stat.exists
 
-- name: create proteccio.rc
-  copy:
-      dest: /etc/proteccio/proteccio.rc
-      content: |
-          [PROTECCIO]
-          IPaddr={{ atos_hsm_ip_address }}
-          SSL=1
-          SrvCert=server_cert.crt
+- name: allow using legacy variables for backwards compatibility
+  set_fact:
+    args:
+      atos_hsms:
+        - name: Legacy variables HSM
+          server_cert_location: "{{ atos_server_cert_location }}"
+          ip: "{{ atos_hsm_ip_address }}"
+  when: atos_hsms is not defined and atos_hsm_ip_address is defined
+  notify: legacy vars warning
 
-          [CLIENT]
-          Mode=0
-          LoggingLevel=7
-          LogFile=proteccio.log
-          ClntKey=proteccio_client.key
-          ClntCert=proteccio_client.crt
+- name: create proteccio.rc
+  template:
+      src: proteccio.rc.j2
+      dest: /etc/proteccio/proteccio.rc
 
 - name: Get the client cert
   get_url:
@@ -62,9 +61,10 @@
 
 - name: Get the server cert
   get_url:
-      url: "{{ atos_server_cert_location }}"
-      dest: /etc/proteccio/server_cert.crt
+      url: "{{ item.server_cert_location }}"
+      dest: "/etc/proteccio/{{ item.ip | replace('.', '_') }}.CRT"
       force: no
+  loop: "{{ atos_hsms }}"
 
 - name: run nethsmstatus to confirm connection  # noqa 301
   command: nethsmstatus

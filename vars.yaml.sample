@@ -1,0 +1,12 @@
+---
+atos_client_iso_name:      "ClientSoftwareISO-1.X.iso"
+atos_client_iso_location:  "https://user:PASSWORD@intranet.example/hsm/client/ClientSoftwareISO-1.X.iso"
+atos_client_cert_location: "https://user:PASSWORD@intranet.example/hsm/client/client_cert.crt"
+atos_client_key_location:  "https://user:PASSWORD@intranet.example/hsm/client/client_key.key"
+atos_hsms:
+  - name:                 "MyHSM 1"
+    server_cert_location: "https://user:PASSWORD@intranet.example/hsm/server/myhsm_1.crt"
+    ip:                   192.168.1.1
+  - name:                 "MyHSM 2"
+    server_cert_location: "https://user:PASSWORD@intranet.example/hsm/server/myhsm_2.crt"
+    ip:                   192.168.1.2
