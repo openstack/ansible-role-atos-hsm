@@ -1,0 +1,5 @@
+---
+- name: legacy vars warning
+  debug:
+    msg: "WARNING: Using legacy atos_server_cert_location and atos_hsm_ip_address
+          variables.  Please udpate your vars file."

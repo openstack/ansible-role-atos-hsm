@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    This version adds support for using more than one ATOS HSM in High
+    Availability mode.  There is a new variable `atos_hsms` that accepts
+    a list of HSM IP addresses and associated Certificates.  See
+    `vars.yaml.sample` for an example.
+deprecations:
+  - |
+    Two variables have been deprecated: `atos_hsm_ip_address` and
+    `atos_server_cert_location`.  You should use the new `atos_hsms` list
+    to specify these values instead.  See `vars.yaml.sample` for an example.
