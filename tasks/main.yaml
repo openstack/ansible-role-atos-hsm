@@ -46,6 +46,7 @@
   template:
       src: proteccio.rc.j2
       dest: /etc/proteccio/proteccio.rc
+      mode: 0644
 
 - name: Get the client cert
   get_url:
