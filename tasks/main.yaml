@@ -1,29 +1,31 @@
 ---
 - name: Create working directory
-  file:
-      path: "{{ atos_client_working_dir }}"
-      state: directory
-      mode: 0755
+  ansible.builtin.file:
+    path: "{{ atos_client_working_dir }}"
+    state: directory
+    mode: '755'
 
 - name: Download ATOS client ISO
-  get_url:
-      url: "{{ atos_client_iso_location }}"
-      dest: "{{ atos_client_working_dir }}/{{ atos_client_iso_name }}"
-      force: no
+  ansible.builtin.get_url:
+    url: "{{ atos_client_iso_location }}"
+    dest: "{{ atos_client_working_dir }}/{{ atos_client_iso_name }}"
+    mode: '644'
+    force: false
 
 - name: Mount the iso for ATOS
-  mount:
-      path: /mnt/atos_iso
-      src: "{{ atos_client_working_dir }}/{{ atos_client_iso_name }}"
-      fstype: iso9660
-      state: mounted
+  ansible.posix.mount:
+    path: /mnt/atos_iso
+    src: "{{ atos_client_working_dir }}/{{ atos_client_iso_name }}"
+    fstype: iso9660
+    state: mounted
 
-- name: check for client software installation
-  stat: path=/etc/proteccio/proteccio.rc.example
+- name: Check for client software installation
+  ansible.builtin.stat:
+    path: /etc/proteccio/proteccio.rc.example
   register: atos_client
 
-- name: install client software
-  expect:
+- name: Install client software
+  ansible.builtin.expect:
     chdir: /mnt/atos_iso/Linux
     command: ./install.sh
     responses:
@@ -32,40 +34,44 @@
       "Press the <Enter> key to exit the installation program": "\n"
   when: not atos_client.stat.exists
 
-- name: allow using legacy variables for backwards compatibility
-  set_fact:
-    args:
-      atos_hsms:
-        - name: Legacy variables HSM
-          server_cert_location: "{{ atos_server_cert_location }}"
-          ip: "{{ atos_hsm_ip_address }}"
+- name: Allow using legacy variables for backwards compatibility
+  ansible.builtin.set_fact:
+    atos_hsms:
+      - name: Legacy variables HSM
+        server_cert_location: "{{ atos_server_cert_location }}"
+        ip: "{{ atos_hsm_ip_address }}"
   when: atos_hsms is not defined and atos_hsm_ip_address is defined
-  notify: legacy vars warning
+  notify: Legacy vars warning
 
-- name: create proteccio.rc
-  template:
-      src: proteccio.rc.j2
-      dest: /etc/proteccio/proteccio.rc
-      mode: 0644
+- name: Create proteccio.rc
+  ansible.builtin.template:
+    src: proteccio.rc.j2
+    dest: /etc/proteccio/proteccio.rc
+    mode: '644'
 
 - name: Get the client cert
-  get_url:
-      url: "{{ atos_client_cert_location }}"
-      dest: /etc/proteccio/proteccio_client.crt
-      force: no
+  ansible.builtin.get_url:
+    url: "{{ atos_client_cert_location }}"
+    dest: /etc/proteccio/proteccio_client.crt
+    mode: '644'
+    force: false
 
 - name: Get the client key
-  get_url:
-      url: "{{ atos_client_key_location }}"
-      dest: /etc/proteccio/proteccio_client.key
-      force: no
+  ansible.builtin.get_url:
+    url: "{{ atos_client_key_location }}"
+    dest: /etc/proteccio/proteccio_client.key
+    mode: '644'
+    force: false
 
 - name: Get the server cert
-  get_url:
-      url: "{{ item.server_cert_location }}"
-      dest: "/etc/proteccio/{{ item.ip | replace('.', '_') }}.CRT"
-      force: no
+  ansible.builtin.get_url:
+    url: "{{ item.server_cert_location }}"
+    dest: "/etc/proteccio/{{ item.ip | replace('.', '_') }}.CRT"
+    mode: '644'
+    force: false
   loop: "{{ atos_hsms }}"
 
-- name: run nethsmstatus to confirm connection  # noqa 301
-  command: nethsmstatus
+- name: Run nethsmstatus to confirm connection
+  ansible.builtin.command: nethsmstatus
+  register: out
+  changed_when: out.rc != 0
